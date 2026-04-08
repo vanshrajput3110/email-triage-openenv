@@ -1,35 +1,43 @@
+import os
+from openai import OpenAI
 from env import EmailEnv, Action
 
-# ===== Initialize environment =====
+client = OpenAI(
+    api_key=os.environ["API_KEY"],
+    base_url=os.environ["API_BASE_URL"]
+)
+
+MODEL = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+
 env = EmailEnv()
 
 print("[START]")
 
 obs = env.reset()
 total_reward = 0
-step_count = 0
 
-while True:
-    email = obs.email.lower()
+for step in range(5):
+    prompt = f"Classify this email into spam, important, or normal:\n{obs.email}"
 
-    # ===== Dummy classification logic (no API needed) =====
-    if "win" in email or "offer" in email:
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    output = response.choices[0].message.content.lower()
+
+    # simple extraction
+    if "spam" in output:
         label = "spam"
-    elif "meeting" in email or "report" in email:
+    elif "important" in output:
         label = "important"
     else:
         label = "normal"
 
     action = Action(label=label)
-
     obs, reward, done, info = env.step(action)
 
-    print(f"[STEP] step={step_count} reward={reward.value}")
-
     total_reward += reward.value
-    step_count += 1
-
-    if done:
-        break
+    print(f"[STEP] step={step} reward={reward.value}")
 
 print(f"[END] total_reward={total_reward}")
