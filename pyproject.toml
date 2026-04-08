@@ -3,9 +3,14 @@ name = "email-triage-openenv"
 version = "0.1.0"
 description = "OpenEnv email triage environment"
 authors = [{name = "Vansh"}]
+
 dependencies = [
     "pydantic",
     "fastapi",
     "uvicorn",
-    "python-multipart"
+    "python-multipart",
+    "openenv-core>=0.2.0"
 ]
+
+[project.scripts]
+server = "server.app:app"
