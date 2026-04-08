@@ -1,22 +1,19 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+import uvicorn
 from env import EmailEnv, Action
+from pydantic import BaseModel
 
 app = FastAPI()
-
 env = EmailEnv()
 
-# ===== Models =====
 class ActionInput(BaseModel):
     label: str
 
-# ===== RESET =====
 @app.post("/reset")
 def reset():
     obs = env.reset()
     return {"email": obs.email}
 
-# ===== STEP =====
 @app.post("/step")
 def step(action: ActionInput):
     act = Action(label=action.label)
@@ -29,12 +26,18 @@ def step(action: ActionInput):
         "info": info
     }
 
-# ===== STATE =====
 @app.get("/state")
 def state():
     return env.state()
 
-# ===== ROOT =====
 @app.get("/")
 def root():
     return {"status": "running"}
+
+# ===== REQUIRED MAIN FUNCTION =====
+def main():
+    uvicorn.run(app, host="0.0.0.0", port=7860)
+
+# ===== REQUIRED ENTRY POINT =====
+if __name__ == "__main__":
+    main()
