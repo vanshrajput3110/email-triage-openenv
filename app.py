@@ -1,19 +1,40 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from env import EmailEnv, Action
 
 app = FastAPI()
 
-@app.get("/", response_class=HTMLResponse)
-def home():
-    return """
-    <html>
-        <head>
-            <title>Email Triage Env</title>
-        </head>
-        <body style="font-family: Arial; text-align: center; margin-top: 50px;">
-            <h1>📧 Email Triage Environment</h1>
-            <p>Status: Running ✅</p>
-            <p>This environment evaluates AI on email classification tasks.</p>
-        </body>
-    </html>
-    """
+env = EmailEnv()
+
+# ===== Models =====
+class ActionInput(BaseModel):
+    label: str
+
+# ===== RESET =====
+@app.post("/reset")
+def reset():
+    obs = env.reset()
+    return {"email": obs.email}
+
+# ===== STEP =====
+@app.post("/step")
+def step(action: ActionInput):
+    act = Action(label=action.label)
+    obs, reward, done, info = env.step(act)
+
+    return {
+        "observation": None if obs is None else obs.email,
+        "reward": reward.value,
+        "done": done,
+        "info": info
+    }
+
+# ===== STATE =====
+@app.get("/state")
+def state():
+    return env.state()
+
+# ===== ROOT =====
+@app.get("/")
+def root():
+    return {"status": "running"}
