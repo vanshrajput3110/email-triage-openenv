@@ -2,6 +2,7 @@ import os
 from openai import OpenAI
 from env import EmailEnv, Action
 
+# Initialize client using injected environment variables
 client = OpenAI(
     api_key=os.environ["API_KEY"],
     base_url=os.environ["API_BASE_URL"]
@@ -19,14 +20,19 @@ total_reward = 0
 for step in range(5):
     prompt = f"Classify this email into spam, important, or normal:\n{obs.email}"
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[{"role": "user", "content": prompt}]
-    )
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}]
+        )
 
-    output = response.choices[0].message.content.lower()
+        output = response.choices[0].message.content.lower()
 
-    # simple extraction
+    except Exception:
+        # fallback if API fails
+        output = "normal"
+
+    # Extract label safely
     if "spam" in output:
         label = "spam"
     elif "important" in output:
