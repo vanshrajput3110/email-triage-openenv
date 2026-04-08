@@ -1,7 +1,19 @@
+```yaml
 name: email-triage-env
-description: Email classification environment
+description: OpenEnv environment for email classification tasks
+
+observation_space:
+  type: string
+  description: Email text
+
+action_space:
+  type: string
+  description: spam / normal / important
 
 tasks:
-  - easy
-  - medium
-  - hard
+  - name: easy
+    description: Spam detection
+  - name: medium
+    description: Priority classification
+  - name: hard
+    description: Response generation
