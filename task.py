@@ -1,14 +1,19 @@
+from grader import grade_easy, grade_medium, grade_hard
+
 tasks = [
     {
         "name": "easy",
-        "description": "Classify email as spam or normal"
+        "description": "Spam classification",
+        "grader": grade_easy
     },
     {
         "name": "medium",
-        "description": "Classify email priority (important or normal)"
+        "description": "Priority classification",
+        "grader": grade_medium
     },
     {
         "name": "hard",
-        "description": "Generate appropriate response to email"
+        "description": "Response generation",
+        "grader": grade_hard
     }
 ]
