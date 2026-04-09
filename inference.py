@@ -1,18 +1,6 @@
-import os
-from openai import OpenAI
-from env import EmailEnv, Action
+from grader import grade_easy, grade_medium, grade_hard
 
-# Initialize client using injected environment variables
-client = OpenAI(
-    api_key=os.environ["API_KEY"],
-    base_url=os.environ["API_BASE_URL"]
-)
-
-MODEL = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-
-env = EmailEnv()
-
-print("[START]")
+...
 
 obs = env.reset()
 total_reward = 0
@@ -25,14 +13,11 @@ for step in range(5):
             model=MODEL,
             messages=[{"role": "user", "content": prompt}]
         )
-
         output = response.choices[0].message.content.lower()
-
     except Exception:
-        # fallback if API fails
         output = "normal"
 
-    # Extract label safely
+    # prediction
     if "spam" in output:
         label = "spam"
     elif "important" in output:
@@ -41,9 +26,22 @@ for step in range(5):
         label = "normal"
 
     action = Action(label=label)
+
+    # 👉 GET CORRECT ANSWER
+    correct = env.data[env.index]["label"]
+
+    # 👉 APPLY DIFFERENT GRADERS
+    if step == 0:
+        score = grade_easy(label, correct)
+    elif step == 1:
+        score = grade_medium(label, correct)
+    else:
+        score = grade_hard(label, ["response"])
+
     obs, reward, done, info = env.step(action)
 
-    total_reward += reward.value
-    print(f"[STEP] step={step} reward={reward.value}")
+    total_reward += score  # use grader score
+
+    print(f"[STEP] step={step} reward={score}")
 
 print(f"[END] total_reward={total_reward}")
