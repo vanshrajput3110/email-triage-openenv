@@ -1,47 +1,64 @@
+import os
+from openai import OpenAI
+from env import EmailEnv, Action
 from grader import grade_easy, grade_medium, grade_hard
 
-...
+# Initialize OpenAI client
+client = OpenAI(
+    api_key=os.environ["API_KEY"],
+    base_url=os.environ["API_BASE_URL"]
+)
 
-obs = env.reset()
-total_reward = 0
+MODEL = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
-for step in range(5):
-    prompt = f"Classify this email into spam, important, or normal:\n{obs.email}"
+# ✅ FIX: define env
+env = EmailEnv()
 
-    try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        output = response.choices[0].message.content.lower()
-    except Exception:
-        output = "normal"
+print("[START]")
 
-    # prediction
-    if "spam" in output:
-        label = "spam"
-    elif "important" in output:
-        label = "important"
-    else:
-        label = "normal"
+try:
+    obs = env.reset()
+    total_reward = 0
 
-    action = Action(label=label)
+    for step in range(5):
+        prompt = f"Classify this email into spam, important, or normal:\n{obs.email}"
 
-    # 👉 GET CORRECT ANSWER
-    correct = env.data[env.index]["label"]
+        try:
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            output = response.choices[0].message.content.lower()
+        except Exception:
+            output = "normal"
 
-    # 👉 APPLY DIFFERENT GRADERS
-    if step == 0:
-        score = grade_easy(label, correct)
-    elif step == 1:
-        score = grade_medium(label, correct)
-    else:
-        score = grade_hard(label, ["response"])
+        # prediction
+        if "spam" in output:
+            label = "spam"
+        elif "important" in output:
+            label = "important"
+        else:
+            label = "normal"
 
-    obs, reward, done, info = env.step(action)
+        action = Action(label=label)
 
-    total_reward += score  # use grader score
+        # correct answer
+        correct = env.data[env.index]["label"]
 
-    print(f"[STEP] step={step} reward={score}")
+        # apply graders
+        if step == 0:
+            score = grade_easy(label, correct)
+        elif step == 1:
+            score = grade_medium(label, correct)
+        else:
+            score = grade_hard(label, ["response"])
 
-print(f"[END] total_reward={total_reward}")
+        obs, reward, done, info = env.step(action)
+
+        total_reward += score
+        print(f"[STEP] step={step} reward={score}")
+
+    print(f"[END] total_reward={total_reward}")
+
+except Exception as e:
+    print("[END] total_reward=0")
